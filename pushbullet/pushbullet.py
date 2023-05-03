@@ -62,7 +62,8 @@ class Pushbullet(object):
         if resp.status_code in (401, 403):
             raise InvalidKeyError()
         elif resp.status_code == 429:
-            raise PushbulletError("Too Many Requests, you have been ratelimited")
+            reset_time = datetime.datetime.fromtimestamp(int(resp.headers['X-Ratelimit-Reset']))
+            raise PushbulletError(f"Too many requests, you have been ratelimited until {reset_time.strftime('%H:%M')}")
         elif resp.status_code != requests.codes.ok:
             raise PushbulletError(resp.status_code)
 
