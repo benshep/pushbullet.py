@@ -1,5 +1,7 @@
+import datetime
 import json
 import os
+from time import sleep
 
 import requests
 from requests import ConnectionError
@@ -201,7 +203,7 @@ class Pushbullet(object):
 
         return req_channel
 
-    def get_pushes(self, modified_after=None, limit=None, filter_inactive=True):
+    def get_pushes(self, modified_after=None, limit=None, filter_inactive=True, wait_for_reset=True):
         data = {"modified_after": modified_after, "limit": limit}
         if filter_inactive:
             data["active"] = "true"
@@ -210,6 +212,13 @@ class Pushbullet(object):
         get_more_pushes = True
         while get_more_pushes:
             r = self._session.get(self.PUSH_URL, params=data)
+            # check if we've been rate-limited - if so, wait until the next reset time
+            if int(r.headers['X-Ratelimit-Remaining']) == 0 and wait_for_reset:
+                reset_time = datetime.datetime.fromtimestamp(int(r.headers['X-Ratelimit-Reset']))
+                sleep_time = reset_time - datetime.datetime.now().timestamp()
+                print(f'Sleeping until {reset_time.strftime("%H:%M")}')
+                sleep((reset_time - datetime.datetime.now()).total_seconds())
+                continue
             if r.status_code != requests.codes.ok:
                 raise PushbulletError(r.text)
 
