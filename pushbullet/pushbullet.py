@@ -216,7 +216,6 @@ class Pushbullet(object):
             # check if we've been rate-limited - if so, wait until the next reset time
             if int(r.headers['X-Ratelimit-Remaining']) == 0 and wait_for_reset:
                 reset_time = datetime.datetime.fromtimestamp(int(r.headers['X-Ratelimit-Reset']))
-                sleep_time = reset_time - datetime.datetime.now().timestamp()
                 print(f'Sleeping until {reset_time.strftime("%H:%M")}')
                 sleep((reset_time - datetime.datetime.now()).total_seconds())
                 continue
